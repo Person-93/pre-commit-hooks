@@ -6,9 +6,28 @@ set -eu
 # pre-commit uses the "identify" pure python library to detect binary files.
 ################################################################################
 
-if [ $# -gt 0 ]; then
-  for filename in "${@}"; do
-    echo "[ERROR] ${filename} appears to be a binary file"
-  done
-  exit 1
+binaries=0
+
+if command -v git-lfs >/dev/null 2>&1; then
+  if [ $# -gt 0 ]; then
+    for filename in "${@}"; do
+      list=$(git lfs ls-files --include "${filename}")
+      if [ -z "${list}" ]; then
+        echo "[ERROR] ${filename} appears to be a binary file"
+        binaries=$((binaries + 1))
+      fi
+    done
+
+    if [ ${binaries} -gt 0 ]; then
+      exit 1
+    fi
+  fi
+
+else
+  if [ $# -gt 0 ]; then
+    for filename in "${@}"; do
+      echo "[ERROR] ${filename} appears to be a binary file"
+    done
+    exit 1
+  fi
 fi
